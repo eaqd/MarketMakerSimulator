@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d1015" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect x=%227%22 y=%221%22 width=%222%22 height=%2214%22 fill=%22%2316c79a%22/%3E%3Crect x=%224%22 y=%225%22 width=%228%22 height=%226%22 fill=%22%2316c79a%22/%3E%3Crect x=%224%22 y=%227%22 width=%228%22 height=%221.5%22 fill=%22%23f5d76e%22/%3E%3C/svg%3E" />
+    <title>FluxChart</title>
+    <link rel="stylesheet" href="/src/ui/style.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <strong class="brand">Flux<span>Chart</span></strong>
+      <label><span class="lbl">Source</span>
+        <select id="feed"></select>
+      </label>
+      <label><span class="lbl">Symbol</span>
+        <input id="symbol" list="symbols" size="9" autocomplete="off" spellcheck="false" />
+        <datalist id="symbols"></datalist>
+      </label>
+      <label><span class="lbl">Clock</span>
+        <select id="clock">
+          <optgroup label="Volume clock (recommended)">
+            <option value="v:60000">Volume ≈ 1 min</option>
+            <option value="v:300000" selected>Volume ≈ 5 min</option>
+            <option value="v:900000">Volume ≈ 15 min</option>
+            <option value="v:3600000">Volume ≈ 1 hour</option>
+          </optgroup>
+          <optgroup label="Time clock (like candles)">
+            <option value="t:60000">Time 1 min</option>
+            <option value="t:300000">Time 5 min</option>
+            <option value="t:900000">Time 15 min</option>
+          </optgroup>
+        </select>
+      </label>
+      <label><span class="lbl">Style</span>
+        <select id="style">
+          <option value="flux">Flux Bars</option>
+          <option value="candle">Candles (compare)</option>
+        </select>
+      </label>
+      <button id="go" class="primary">Load</button>
+      <span id="status" class="status">idle</span>
+    </header>
+    <nav class="bar sub">
+      <span class="group" id="toggles"></span>
+      <span class="group tools">
+        <button data-tool="hline" title="Horizontal level (support / resistance)">— Level</button>
+        <button data-tool="trend" title="Trend line: click two points">╱ Trend</button>
+        <button data-tool="avwap" title="Anchored VWAP from the bar you click">⚓ AVWAP</button>
+        <button data-tool="erase" title="Click a drawing to delete it">✕ Erase</button>
+        <button id="clear" title="Remove all drawings">Clear</button>
+        <label class="file" title="Load your own tick data: time,price,qty[,side]">CSV<input id="csv" type="file" accept=".csv,text/csv" hidden /></label>
+        <button id="help">? Guide</button>
+      </span>
+    </nav>
+    <main>
+      <canvas id="chart"></canvas>
+    </main>
+    <dialog id="guide">
+      <form method="dialog"><button class="close" aria-label="Close">✕</button></form>
+      <h2>Reading a Flux Bar</h2>
+      <ul>
+        <li><b>Thin wick</b>: the full high–low range, same as a candle.</li>
+        <li><b>Body</b>: the <i>value area</i>, the price zone where 70% of the bar's volume traded. It shows where the market accepted price, not just where it opened and closed.</li>
+        <li><b>Body colour</b>: delta, i.e. aggressive buys minus aggressive sells. Green means buyers were lifting offers, red means sellers were hitting bids, grey means balanced. The more saturated, the more one-sided.</li>
+        <li><b>Gold tick</b>: point of control, the busiest single price in the bar.</li>
+        <li><b>Left / right ticks</b>: open and close, so nothing from a candle is lost.</li>
+        <li><b>◆ diamonds</b>: absorption. Aggressive flow went one way but price closed the other way, meaning a big passive player took the other side. Green below the bar means sellers were absorbed; red above means buyers were absorbed.</li>
+      </ul>
+      <h2>The clock</h2>
+      <p>On the volume clock, every bar contains the same volume. Busy periods produce more bars, quiet periods produce fewer, so each bar carries a similar amount of information. Tempo shows how fast each bar filled.</p>
+      <h2>Indicators</h2>
+      <ul>
+        <li><b>VWAP ±1σ/±2σ</b> (blue): volume-weighted fair value for the session, with exact volume-weighted bands.</li>
+        <li><b>Profile</b> (right): volume at price for the visible bars. Gold = POC, blue = value area. On the chart: solid gold lines are high-volume nodes (acceptance, often support or resistance); dotted grey lines are low-volume nodes (rejection, price moves through them fast).</li>
+        <li><b>CVD</b>: cumulative delta. If price makes a new high and CVD doesn't, the move lacks aggressive buyers.</li>
+        <li><b>Tempo</b>: log₂ of how much faster than usual the bar filled. Orange bars ≥ 1 mean at least twice normal speed: urgency.</li>
+        <li><b>Efficiency</b>: net move ÷ distance travelled over 14 bars. Above 0.6 means trending, below 0.3 means ranging. It tells you which playbook to use.</li>
+      </ul>
+      <p class="muted">Controls: drag to pan, scroll or pinch to zoom, drag or scroll the price axis to stretch it, and double-click to reset. The full trading playbook is in <code>docs/TRADING_GUIDE.md</code>.</p>
+      <p class="muted">No chart predicts the market. This one shows more of what happened. Test any strategy on the simulator and on history before you risk money.</p>
+    </dialog>
+    <script type="module" src="/src/ui/main.ts"></script>
+  </body>
+</html>

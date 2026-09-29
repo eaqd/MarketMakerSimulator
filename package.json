@@ -1,0 +1,19 @@
+{
+  "name": "fluxchart",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FluxChart: a trading chart platform built around Flux Bars, an order-flow-aware alternative to candlesticks.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  }
+}
