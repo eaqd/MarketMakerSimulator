@@ -35,3 +35,28 @@ describe('CSV import', () => {
     expect(() => parseTradesCsv('a,b\n1,2')).toThrow();
   });
 });
+
+describe('Kraken and Bybit parsers', () => {
+  it('Kraken: side is the taker side', async () => {
+    const { parseKrakenTrade, parseKrakenRest } = await import('../src/data/kraken');
+    expect(
+      parseKrakenTrade({ symbol: 'BTC/USD', side: 'sell', price: 65000.5, qty: 0.1, trade_id: 9, timestamp: '2024-05-01T00:00:00.123Z' }),
+    ).toEqual({ t: Date.parse('2024-05-01T00:00:00.123Z'), price: 65000.5, qty: 0.1, side: -1 });
+    expect(parseKrakenRest(['65000.1', '0.25', 1714521600.5, 'b', 'l', '', 7])).toEqual({
+      t: 1714521600500,
+      price: 65000.1,
+      qty: 0.25,
+      side: 1,
+    });
+  });
+
+  it('Bybit: S is the taker side', async () => {
+    const { parseBybitTrade } = await import('../src/data/bybit');
+    expect(parseBybitTrade({ T: 1714521600000, s: 'BTCUSDT', S: 'Buy', v: '0.01', p: '65000', i: 'x' })).toEqual({
+      t: 1714521600000,
+      price: 65000,
+      qty: 0.01,
+      side: 1,
+    });
+  });
+});

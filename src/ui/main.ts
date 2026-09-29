@@ -192,7 +192,7 @@ class App {
       if (this.feed === feed && this.trades.length === 0) {
         this.setStatus(
           { kind: 'error', message: 'no trades yet' },
-          'No data yet. This venue may be blocked where you are, or the symbol is wrong. Try another source.',
+          'No data yet. This exchange may be blocked where you are, or the symbol is wrong. Try Bybit, Kraken or Coinbase.',
         );
       }
     }, 12_000);
@@ -211,7 +211,9 @@ class App {
           this.rebuild();
           return;
         }
-        if (!this.builder) {
+        // Re-calibrate the volume clock while live data is still short, each time the sample doubles.
+        const span = t.t - this.trades[0].t;
+        if (!this.builder || (this.calibratedSpan < 3_600_000 && span > 2 * this.calibratedSpan)) {
           this.rebuild();
           return;
         }
@@ -228,11 +230,13 @@ class App {
   private clock(): ClockConfig | null {
     const [mode, ms] = this.clockSel.value.split(':');
     const target = Number(ms);
+    this.calibratedSpan = Infinity;
     if (mode === 't') return { mode: 'time', size: target };
     // Volume clock: calibrate to the observed trading rate. Needs a little history first.
     const tr = this.trades;
     if (tr.length < 50 || tr[tr.length - 1].t - tr[0].t < 15_000) return null;
     const size = calibrateVolumeClock(tr, target);
+    this.calibratedSpan = tr[tr.length - 1].t - tr[0].t;
     return size ? { mode: 'volume', size } : null;
   }
 
@@ -262,6 +266,7 @@ class App {
   }
 
   private clockInfo = '';
+  private calibratedSpan = Infinity;
 
   private setStatus(s: FeedStatus, text?: string): void {
     const el = this.statusEl;

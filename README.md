@@ -41,6 +41,8 @@ Each indicator uses information that only this chart has (volume at price, trade
 | Binance | `aggTrade` WebSocket and REST history. Aggressor side comes from the `m` flag. |
 | Binance US | Same API, for regions where binance.com is blocked |
 | Coinbase | `matches` WebSocket and REST history. Aggressor side is derived from the maker side. |
+| Bybit | `publicTrade` WebSocket (the last 60 trades as history, then builds up live) |
+| Kraken | v2 `trade` WebSocket and the last 1000 trades as history. Available in most regions, including the US. |
 | Simulator | Offline, agent-based market (market maker, informed and noise traders, regime switches, passive walls) |
 | CSV import | Any tick data: `time,price,qty[,side]`. A missing side is inferred with the tick rule. |
 

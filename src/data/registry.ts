@@ -1,6 +1,8 @@
 import { BinanceFeed } from './binance';
+import { BybitFeed } from './bybit';
 import { CoinbaseFeed } from './coinbase';
 import type { FeedOption } from './feed';
+import { KrakenFeed } from './kraken';
 import { SimFeed } from './simulator';
 
 /** Every data source the platform can use. All of them are free and need no account. */
@@ -24,6 +26,18 @@ export const FEEDS: FeedOption[] = [
     label: 'Coinbase (live)',
     symbols: ['BTC-USD', 'ETH-USD', 'SOL-USD'],
     create: (s, o) => new CoinbaseFeed(s, o.backfillPages),
+  },
+  {
+    id: 'bybit',
+    label: 'Bybit (live)',
+    symbols: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT'],
+    create: (s) => new BybitFeed(s),
+  },
+  {
+    id: 'kraken',
+    label: 'Kraken (live)',
+    symbols: ['BTC/USD', 'ETH/USD', 'SOL/USD', 'XRP/USD'],
+    create: (s) => new KrakenFeed(s),
   },
   {
     id: 'sim',
