@@ -7,6 +7,9 @@ import type { Feed, FeedStatus } from '../data/feed';
 import { FEEDS } from '../data/registry';
 
 const MAX_TRADES = 1_500_000;
+/** Preview build for sandboxed pages that block outside connections: simulator and CSV only. */
+const OFFLINE = import.meta.env.MODE === 'offline';
+const AVAILABLE = OFFLINE ? FEEDS.filter((f) => f.id === 'sim') : FEEDS;
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 const store = {
@@ -44,10 +47,11 @@ class App {
   private statusEl = $<HTMLSpanElement>('status');
 
   constructor() {
-    for (const f of FEEDS) this.feedSel.add(new Option(f.label, f.id));
+    for (const f of AVAILABLE) this.feedSel.add(new Option(f.label, f.id));
     const params = new URLSearchParams(location.hash.slice(1));
-    const saved = store.get('source', { feed: 'binance', symbol: 'BTCUSDT', clock: 'v:300000' });
-    this.feedSel.value = params.get('feed') ?? saved.feed;
+    const saved = store.get('source', { feed: AVAILABLE[0].id, symbol: AVAILABLE[0].symbols[0], clock: 'v:300000' });
+    const feedId = params.get('feed') ?? saved.feed;
+    this.feedSel.value = AVAILABLE.some((f) => f.id === feedId) ? feedId : AVAILABLE[0].id;
     this.symbolIn.value = params.get('symbol') ?? saved.symbol;
     this.clockSel.value = params.get('clock') ?? saved.clock;
     this.fillSymbols();
@@ -66,7 +70,7 @@ class App {
   private lastStatus: FeedStatus['kind'] = 'closed';
 
   private fillSymbols(): void {
-    const opt = FEEDS.find((f) => f.id === this.feedSel.value)!;
+    const opt = AVAILABLE.find((f) => f.id === this.feedSel.value)!;
     const dl = $<HTMLDataListElement>('symbols');
     dl.innerHTML = '';
     for (const s of opt.symbols) dl.append(new Option(s));
@@ -128,7 +132,7 @@ class App {
     this.chart.onToolDone = () => setTool('none');
     this.chart.onDrawingsChange = (d) => store.set(`drawings:${this.sourceKey}`, d);
     $('clear').addEventListener('click', () => {
-      if (this.chart.drawings.length && confirm('Remove all drawings on this chart?')) {
+      if (this.chart.drawings.length && (OFFLINE || confirm('Remove all drawings on this chart?'))) {
         this.chart.setDrawings([]);
         store.set(`drawings:${this.sourceKey}`, []);
       }
@@ -161,7 +165,7 @@ class App {
   private saveSource(): void {
     const src = { feed: this.feedSel.value, symbol: this.symbolIn.value.trim(), clock: this.clockSel.value };
     store.set('source', src);
-    history.replaceState(null, '', `#${new URLSearchParams(src)}`);
+    if (!OFFLINE) history.replaceState(null, '', `#${new URLSearchParams(src)}`);
   }
 
   private stopFeed(): void {
@@ -179,7 +183,7 @@ class App {
   private load(): void {
     this.stopFeed();
     this.saveSource();
-    const opt = FEEDS.find((f) => f.id === this.feedSel.value)!;
+    const opt = AVAILABLE.find((f) => f.id === this.feedSel.value)!;
     const symbol = this.symbolIn.value.trim().toUpperCase() || opt.symbols[0];
     this.trades = [];
     this.builder = null;
@@ -285,6 +289,7 @@ class App {
       case 'live':
         el.classList.add('live');
         msg ??= `live · ${this.trades.length.toLocaleString()} trades · ${this.builder?.bars.length ?? 0} bars · ${this.clockInfo}`;
+        if (OFFLINE) msg += ' · preview: live exchange data runs on the hosted site';
         break;
       case 'error':
         el.classList.add('error');
